@@ -45,7 +45,7 @@
 
 - name: "[CREATE] Report result"
   ansible.builtin.debug:
-    msg: "{{ file_name }}: HTTP {{ create_result.status }}"
+    msg: "{{ file_name }}: HTTP {{ create_result.status }} — {{ create_result.json | default(create_result.content) | default('no body') }}"
   when: create_result is defined and create_result.status is defined
 
 # ==========================================
@@ -79,7 +79,7 @@
 
 - name: "[MODIFY] Report result"
   ansible.builtin.debug:
-    msg: "{{ file_name }}: HTTP {{ modify_result.status }}"
+    msg: "{{ file_name }}: HTTP {{ modify_result.status }} — {{ modify_result.json | default(modify_result.content) | default('no body') }}"
   when: modify_result is defined and modify_result.status is defined
 
 # ==========================================
