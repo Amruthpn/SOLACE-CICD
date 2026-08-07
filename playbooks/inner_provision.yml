@@ -1,0 +1,36 @@
+---
+- name: Extract metadata and JSON payload content
+  ansible.builtin.set_fact:
+    file_name: "{{ file_path | basename }}"
+    json_data: "{{ lookup('file', file_path) | from_json }}"
+
+- name: "[CREATE] Ensure queue is provisioned"
+  ansible.builtin.uri:
+    url: "http://{{ ansible_host }}:{{ semp_port }}/SEMP/v2/config/msgVpns/{{ json_data.vpn_name }}/queues"
+    method: POST
+    user: "{{ semp_user }}"
+    password: "{{ semp_pass }}"
+    force_basic_auth: yes
+    body_format: json
+    body:
+      queueName: "{{ json_data.queue_name }}"
+      ingressEnabled: true
+      egressEnabled: true
+      accessType: "{{ json_data.access_type | default('exclusive') }}"
+      maxSpoolUsage: "{{ json_data.max_spool_usage_mb | default(2000) }}"
+    status_code: [200, 400]
+  when: "'CREATE' in file_name and json_data.queue_name is defined"
+
+- name: "[MODIFY] Patch queue parameters"
+  ansible.builtin.uri:
+    url: "http://{{ ansible_host }}:{{ semp_port }}/SEMP/v2/config/msgVpns/{{ json_data.vpn_name }}/queues/{{ json_data.queue_name }}"
+    method: PATCH
+    user: "{{ semp_user }}"
+    password: "{{ semp_pass }}"
+    force_basic_auth: yes
+    body_format: json
+    body:
+      maxSpoolUsage: "{{ json_data.max_spool_usage_mb | default(omit) }}"
+      accessType: "{{ json_data.access_type | default(omit) }}"
+    status_code: [200, 400]
+  when: "'MODIFY' in file_name and json_data.queue_name is defined"
