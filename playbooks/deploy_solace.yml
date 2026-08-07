@@ -2,6 +2,7 @@
 - name: Provision Solace Event Mesh Configurations Natively
   hosts: solace_brokers
   gather_facts: no
+  connection: local  # <--- THIS ENFORCES DIRECT MACHINE REST PROCESSING AND BYPASSES SSH PORT 22
   vars:
     vpn_name: "FinanceCoreVPN"
     client_username: "payment_processor_user"
@@ -20,8 +21,7 @@
         body:
           msgVpnName: "{{ vpn_name }}"
           enabled: true
-        # 200 = Success, 400 = Object already exists (treat as success)
-        status_code: [200, 400] 
+        status_code: [200, 400] # 400 means already exists, treat as success
 
     - name: Ensure Client Username is Provisioned Natively
       ansible.builtin.uri:
