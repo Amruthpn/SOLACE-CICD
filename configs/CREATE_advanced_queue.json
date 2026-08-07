@@ -1,5 +1,5 @@
 {
-  "vpn_name": "FinanceCoreVPN",
+  "msg_vpn": "FinanceCoreVPN",
   "queue_name": "orders.processing.v1.q",
   "access_type": "exclusive",
   "max_spool_usage_mb": 5000,
