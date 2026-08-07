@@ -1,0 +1,53 @@
+---
+- name: Provision Solace Event Mesh Configurations Natively
+  hosts: solace_brokers
+  gather_facts: no
+  vars:
+    vpn_name: "FinanceCoreVPN"
+    client_username: "payment_processor_user"
+    client_password: "SecureUserPassword123"
+    queue_name: "orders.processing.v1.q"
+
+  tasks:
+    - name: Ensure Message VPN Exists on Broker Instance
+      ansible.builtin.uri:
+        url: "http://{{ ansible_host }}:{{ semp_port }}/SEMP/v2/config/msgVpns"
+        method: POST
+        user: "{{ semp_user }}"
+        password: "{{ semp_pass }}"
+        force_basic_auth: yes
+        body_format: json
+        body:
+          msgVpnName: "{{ vpn_name }}"
+          enabled: true
+        # 200 = Success, 400 = Object already exists (treat as success)
+        status_code: [200, 400] 
+
+    - name: Ensure Client Username is Provisioned Natively
+      ansible.builtin.uri:
+        url: "http://{{ ansible_host }}:{{ semp_port }}/SEMP/v2/config/msgVpns/{{ vpn_name }}/clientUsernames"
+        method: POST
+        user: "{{ semp_user }}"
+        password: "{{ semp_pass }}"
+        force_basic_auth: yes
+        body_format: json
+        body:
+          clientUsername: "{{ client_username }}"
+          enabled: true
+          password: "{{ client_password }}"
+        status_code: [200, 400]
+
+    - name: Ensure Target Core Queue Status is Active
+      ansible.builtin.uri:
+        url: "http://{{ ansible_host }}:{{ semp_port }}/SEMP/v2/config/msgVpns/{{ vpn_name }}/queues"
+        method: POST
+        user: "{{ semp_user }}"
+        password: "{{ semp_pass }}"
+        force_basic_auth: yes
+        body_format: json
+        body:
+          queueName: "{{ queue_name }}"
+          ingressEnabled: true
+          egressEnabled: true
+          maxSpoolUsage: 2000
+        status_code: [200, 400]
