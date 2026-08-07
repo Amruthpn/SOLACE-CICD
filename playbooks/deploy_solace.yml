@@ -4,7 +4,7 @@
   gather_facts: no
   connection: local
   vars:
-    # Searches for JSON files relative to where Jenkins triggers the playbook
+    # Searches for JSON files relative to where the playbook is run
     config_files: "{{ lookup('fileglob', '../configs/*.json', wantlist=True) }}"
 
   tasks:
@@ -14,7 +14,8 @@
       when: config_files | length == 0
 
     - name: Process Staged Configuration Profiles Loop
-      ansible.builtin.include_tasks: inner_provision.yml
+      # ADDED 'playbooks/' PREFIX HERE SO ANSIBLE CAN FIND THE COMPANION FILE NATIVELY
+      ansible.builtin.include_tasks: playbooks/inner_provision.yml
       loop: "{{ config_files }}"
       loop_control:
         loop_var: file_path
