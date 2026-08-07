@@ -2,13 +2,14 @@ pipeline {
     agent any
 
     environment {
-        // Loads your admin credentials securely from the local Jenkins vault
+        // Safely pulls your admin login from the secure Jenkins credential store
         SOLACE_SEMP = credentials('solace_admin_creds')
     }
 
     stages {
         stage('Initialize Framework Workspace') {
             steps {
+                // Securely downloads your playbooks and configs folder from GitHub
                 checkout scm
             }
         }
