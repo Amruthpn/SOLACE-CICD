@@ -1,53 +1,20 @@
 ---
-- name: Provision Solace Event Mesh Configurations Natively
+- name: Dynamic File-Driven Solace Provisioning Engine
   hosts: solace_brokers
   gather_facts: no
-  connection: local  # <--- THIS ENFORCES DIRECT MACHINE REST PROCESSING AND BYPASSES SSH PORT 22
+  connection: local
   vars:
-    vpn_name: "FinanceCoreVPN"
-    client_username: "payment_processor_user"
-    client_password: "SecureUserPassword123"
-    queue_name: "orders.processing.v1.q"
+    # Searches for JSON files relative to where Jenkins triggers the playbook
+    config_files: "{{ lookup('fileglob', '../configs/*.json', wantlist=True) }}"
 
   tasks:
-    - name: Ensure Message VPN Exists on Broker Instance
-      ansible.builtin.uri:
-        url: "http://{{ ansible_host }}:{{ semp_port }}/SEMP/v2/config/msgVpns"
-        method: POST
-        user: "{{ semp_user }}"
-        password: "{{ semp_pass }}"
-        force_basic_auth: yes
-        body_format: json
-        body:
-          msgVpnName: "{{ vpn_name }}"
-          enabled: true
-        status_code: [200, 400] # 400 means already exists, treat as success
+    - name: Fail if no configuration files are found
+      ansible.builtin.fail:
+        msg: "No JSON payload files located inside the configs/ directory structure."
+      when: config_files | length == 0
 
-    - name: Ensure Client Username is Provisioned Natively
-      ansible.builtin.uri:
-        url: "http://{{ ansible_host }}:{{ semp_port }}/SEMP/v2/config/msgVpns/{{ vpn_name }}/clientUsernames"
-        method: POST
-        user: "{{ semp_user }}"
-        password: "{{ semp_pass }}"
-        force_basic_auth: yes
-        body_format: json
-        body:
-          clientUsername: "{{ client_username }}"
-          enabled: true
-          password: "{{ client_password }}"
-        status_code: [200, 400]
-
-    - name: Ensure Target Core Queue Status is Active
-      ansible.builtin.uri:
-        url: "http://{{ ansible_host }}:{{ semp_port }}/SEMP/v2/config/msgVpns/{{ vpn_name }}/queues"
-        method: POST
-        user: "{{ semp_user }}"
-        password: "{{ semp_pass }}"
-        force_basic_auth: yes
-        body_format: json
-        body:
-          queueName: "{{ queue_name }}"
-          ingressEnabled: true
-          egressEnabled: true
-          maxSpoolUsage: 2000
-        status_code: [200, 400]
+    - name: Process Staged Configuration Profiles Loop
+      ansible.builtin.include_tasks: inner_provision.yml
+      loop: "{{ config_files }}"
+      loop_control:
+        loop_var: file_path
