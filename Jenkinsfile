@@ -13,12 +13,25 @@ pipeline {
             }
         }
 
-        stage('Deploying to Production (Port 8081)') {
+        stage('Deploying to Dev (Port 8080)') {
             when {
-                branch 'main'
+                // Matches dev or origin/dev
+                branch pattern: ".*dev", comparator: "REGEXP"
             }
             steps {
-                // Ensure NO '--check' flag is active in this execution block
+                sh """
+                ${VENV_PATH}/ansible-playbook -i inventory/dev.ini playbooks/deploy_solace.yml \
+                --extra-vars "semp_user=${SOLACE_SEMP_USR} semp_pass=${SOLACE_SEMP_PSW}"
+                """
+            }
+        }
+
+        stage('Deploying to Production (Port 8081)') {
+            when {
+                // Matches main or origin/main
+                branch pattern: ".*main", comparator: "REGEXP"
+            }
+            steps {
                 sh """
                 ${VENV_PATH}/ansible-playbook -i inventory/prod.ini playbooks/deploy_solace.yml \
                 --extra-vars "semp_user=${SOLACE_SEMP_USR} semp_pass=${SOLACE_SEMP_PSW}"
