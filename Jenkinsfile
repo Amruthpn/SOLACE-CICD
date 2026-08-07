@@ -13,12 +13,9 @@ pipeline {
             }
         }
 
-        stage('Deploying to Dev (Port 8080)') {
-            when {
-                // Matches dev or origin/dev
-                branch pattern: ".*dev", comparator: "REGEXP"
-            }
+        stage('Deploying to Dev Broker (Port 8080)') {
             steps {
+                echo "Running configurations on Dev Broker..."
                 sh """
                 ${VENV_PATH}/ansible-playbook -i inventory/dev.ini playbooks/deploy_solace.yml \
                 --extra-vars "semp_user=${SOLACE_SEMP_USR} semp_pass=${SOLACE_SEMP_PSW}"
@@ -26,12 +23,9 @@ pipeline {
             }
         }
 
-        stage('Deploying to Production (Port 8081)') {
-            when {
-                // Matches main or origin/main
-                branch pattern: ".*main", comparator: "REGEXP"
-            }
+        stage('Deploying to Production Broker (Port 8081)') {
             steps {
+                echo "Running configurations on Production Broker..."
                 sh """
                 ${VENV_PATH}/ansible-playbook -i inventory/prod.ini playbooks/deploy_solace.yml \
                 --extra-vars "semp_user=${SOLACE_SEMP_USR} semp_pass=${SOLACE_SEMP_PSW}"
