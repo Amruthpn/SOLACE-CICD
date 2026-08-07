@@ -4,7 +4,7 @@
   gather_facts: no
   connection: local
   vars:
-    # Looks for any JSON configuration file located inside your root configs folder
+    # Searches for JSON files relative to the playbooks/ execution path
     config_files: "{{ lookup('fileglob', '../configs/*.json', wantlist=True) }}"
 
   tasks:
@@ -14,7 +14,6 @@
       when: config_files | length == 0
 
     - name: Process Staged Configuration Profiles Loop
-      # BYPASS DUPLICATE FOLDERS BY CALLING THE FILE DIRECTLY IN ITS RUN TIME ENVIRONMENT
       ansible.builtin.include_tasks: inner_provision.yml
       loop: "{{ config_files }}"
       loop_control:
